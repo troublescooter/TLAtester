@@ -1,0 +1,12 @@
+TLAtester
+============================
+
+This TLA module builds a state machine that executes a sequence of tests.
+
+ssam and rc from plan9port are required to run ./state
+
+Run example as:
+./test MCTest
+
+Print complete state except variables declared in Test.tla after test i:
+./state MCTest i
