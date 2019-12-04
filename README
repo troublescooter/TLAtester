@@ -1,7 +1,7 @@
 TLAtester
 ============================
 
-This TLA module builds a state machine that executes a sequence of tests.
+TLA module for executing a sequence of tests.
 
 ssam and rc from plan9port are required to run ./state
 
