@@ -1,0 +1,9 @@
+#!/usr/lib/plan9/bin/rc
+# prints testing results and errors indicating underspecified variables
+if(~ $#* 0){
+    echo 'Prints the testing results and certain errors'
+    echo 'usage: test <file>'
+    echo 'Run example as ./test MCTest'
+    exit 1
+}
+tlc $1 | 9 grep 'TRUE|Error: Suc' | 9 sed '/TRUE/{N;s/\n//g;s/TRUE//g;s/"//g;}' | sort | uniq

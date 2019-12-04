@@ -1,0 +1,10 @@
+#!/usr/lib/plan9/bin/rc
+# needs plan9port to run
+if(~ $#* 0){
+    echo 'Prints the complete state (minus boilerplate variables to run test) after a specified test.'
+    echo 'usage: printtest <file> <test number>'
+    exit 1
+}
+state=`{expr $2 '*' 3 + 1}
+
+tlc $1 | 9 ssam -n 'y/^$/ g/^State '^$state^'/p' | 9 grep -v '^/\\ (done|counter|Tests)' | 9 grep -v '^   \[state|^State'
