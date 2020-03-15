@@ -1,29 +1,28 @@
 ---- MODULE Test -----------------------------------------------------
 EXTENDS Sequences, Naturals, TLC, Example
 (* Documentation *)
-(* This module builds a state machine that executes a sequence of tests. *)
-(* In order to adapt to different module than 'Example', change 'Example' to the *)
-(* module to test, adapt number of tests by adding T's in TestInit, and adapt the *)
-(* operators Pre, Run and the sequence P according to example *)
+(*This module builds a state machine that executes a sequence of tests.
+In order to adapt to different module than ExampleToTest, change ExampleToTest to the
+module to test, adapt number of tests n, and adapt the
+operators Pre, Run and the sequence PList according to example *)
 --------------------------------------------------------------------------------
-VARIABLE Tests, counter, done
-testvars == <<Tests, counter, done>>
+VARIABLE counter, done, state, tests
+testvars == <<counter, done, state, tests>>
 
-total == <<Tests, counter, done>> \o vars
+total == <<counter, done, state, tests>> \o vars
 
-T ==
-    [state |-> 0,
-    passed |-> "not tested"]
+(* how many tests to run in total *)
+n == 1
 
 TestInit ==
-    (* CHANGE: how many tests in total, for example three: *)
-    /\ Tests = <<T,T,T>>
+    /\ tests = <<>>
     /\ counter = 1
     /\ done = 0
+    /\ state = 0
     /\ Init
 
 Pre ==
-    /\ Tests[counter].state = 0
+    /\ state = 0
     (* CHANGE: add setup for different tests *)
     /\ \/ /\ counter = 1
           /\ q' = [q EXCEPT ![0] = <<1,2,3>>]
@@ -32,13 +31,12 @@ Pre ==
           /\ additional' = 4
           /\ UNCHANGED q
        \/ /\ counter = 3
-          (* /\ q' = [q EXCEPT ![0] = <<1,2,3>>] *)
-          /\ UNCHANGED <<q,additional>>
-    /\ Tests' = [Tests EXCEPT ![counter].state = 1]
-    /\ UNCHANGED <<counter,done>>
+          /\ UNCHANGED <<q, additional>>
+    /\ state' = 1
+    /\ UNCHANGED <<counter, done, tests>>
 
 Run ==
-    /\ Tests[counter].state = 1
+    /\ state = 1
     (* CHANGE: Add operators/functions to test *)
     /\ \/ /\ counter = 1
           /\ TRUE
@@ -49,8 +47,8 @@ Run ==
        \/ /\ counter = 3
           /\ Attach
           /\ UNCHANGED additional
-    /\ Tests' = [Tests EXCEPT ![counter].state = 2]
-    /\ UNCHANGED <<counter,done>>
+    /\ state' = 2
+    /\ UNCHANGED <<counter, done, tests>>
 
 (* CHANGE: Add a postcondition *)
 Post1 ==
@@ -61,49 +59,44 @@ Post3 ==
     /\ q[0] = <<1,2,3,4>>
     /\ q[1] = <<>>
     /\ additional = 5
+
 (* CHANGE: Add postcondition to P *)
-P == <<Post1, Post2, Post3>>
+PList == <<Post1, Post2, Post3>>
 
 Post ==
-    /\ Tests[counter].state = 2
-    /\ counter \in 1..Len(P)
+    /\ state = 2
+    /\ counter \in 1..Len(PList)
     /\ UNCHANGED vars
-    /\ Tests' = [Tests EXCEPT ![counter].passed = IF P[counter] THEN "passed"
-                                                                ELSE "failed"]
-    /\ IF counter = Len(Tests) THEN /\ done' = 1
-                                    /\ UNCHANGED <<counter>>
-                               ELSE /\ counter' = counter + 1
-                                    /\ UNCHANGED <<done>>
+    /\ tests' = tests \o <<IF PList[counter] THEN "passed" ELSE "failed">>
+    /\ state' = 0
+    /\ IF counter = n THEN /\ done' = 1
+                           /\ UNCHANGED counter
+                      ELSE /\ counter' = counter + 1
+                           /\ UNCHANGED done
 
 Test ==
     \/ /\ done = 0
        /\ \/ Pre
-          \/ /\ ~ ENABLED Pre
-             /\ Tests[counter].state = 0
-             /\ Print("Precondition not enabled, counter:", TRUE)
-             /\ Print(counter, TRUE)
-             /\ UNCHANGED <<Tests, counter>>
-             /\ UNCHANGED vars
           \/ Run
-          \/ /\ ~ ENABLED Run
-             /\ Tests[counter].state = 1
-             /\ Print("Run statement not enabled, counter:", TRUE)
-             /\ Print(counter, TRUE)
-             /\ UNCHANGED <<Tests, counter>>
-             /\ UNCHANGED vars
           \/ Post
-          \/ /\ ~ ENABLED Post
-             /\ Tests[counter].state = 2
-             /\ Print("Postcondition not enabled, counter:", TRUE)
+          \/ /\ \/ /\ ~ ENABLED Pre
+                   /\ counter \in 1..n
+                   /\ state = 0
+                   /\ Print("Precondition not enabled, Test:", TRUE)
+                \/ /\ ~ ENABLED Run
+                   /\ counter \in 1..n
+                   /\ state = 1
+                   /\ Print("Run statement not enabled, Test:", TRUE)
+                \/ /\ ~ ENABLED Post
+                   /\ counter \in 1..n
+                   /\ state = 2
+                   /\ Print("Postcondition not enabled, Test:", TRUE)
              /\ Print(counter, TRUE)
-             /\ UNCHANGED <<Tests, counter>>
-             /\ UNCHANGED vars
+             /\ done' = 2
+             /\ UNCHANGED <<counter, state, tests, vars>>
     \/ /\ done = 1
-       /\ \A i \in 1..Len(Tests) : /\ Print(i,TRUE)
-                                   /\ Print(Tests[i].passed, TRUE)
        /\ done' = 2
-       /\ UNCHANGED <<Tests, counter>>
-       /\ UNCHANGED vars
+       /\ UNCHANGED <<counter, state, tests, vars>>
 
 TestSpec == TestInit /\ [][Test]_total
 ================================================================================
