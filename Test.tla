@@ -12,7 +12,7 @@ testvars == <<counter, done, state, tests>>
 total == <<counter, done, state, tests>> \o vars
 
 (* how many tests to run in total *)
-n == 1
+n == 3
 
 TestInit ==
     /\ tests = <<>>
